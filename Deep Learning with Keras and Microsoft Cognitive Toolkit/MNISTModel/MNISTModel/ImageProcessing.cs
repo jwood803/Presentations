@@ -17,12 +17,14 @@ namespace CNTKImageProcessing
         /// <returns>A list of pixels in CHW order</returns>
         public static List<float> ParallelExtractCHW(this Bitmap image)
         {
+            const int CHANNEL = 1;
+
             // We use local variables to avoid contention on the image object through the multiple threads.
             int channelStride = image.Width * image.Height;
             int imageWidth = image.Width;
             int imageHeight = image.Height;
 
-            var features = new byte[imageWidth * imageHeight * 3];
+            var features = new byte[imageWidth * imageHeight * CHANNEL];
             var bitmapData = image.LockBits(new System.Drawing.Rectangle(0, 0, imageWidth, imageHeight), ImageLockMode.ReadOnly, image.PixelFormat);
             IntPtr ptr = bitmapData.Scan0;
             int bytes = Math.Abs(bitmapData.Stride) * bitmapData.Height;
@@ -41,7 +43,7 @@ namespace CNTKImageProcessing
             {
                 Parallel.For(0, imageWidth, (int w) =>
                 {
-                    Parallel.For(0, 3, (int c) =>
+                    Parallel.For(0, CHANNEL, (int c) =>
                     {
                         features[channelStride * c + imageWidth * h + w] = rgbValues[mapPixel(h, w, c)];
                     });
