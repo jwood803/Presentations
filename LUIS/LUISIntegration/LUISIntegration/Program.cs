@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
@@ -29,7 +30,12 @@ namespace LUISIntegration
 
                 if(response?.Entities.Count > 0)
                 {
+                    Console.WriteLine("Entities:");
 
+                    foreach(var entity in response?.Entities)
+                    {
+                        Console.WriteLine(entity.EntityName);
+                    }
                 }
 
                 Console.WriteLine(Environment.NewLine);
@@ -42,19 +48,32 @@ namespace LUISIntegration
             var client = new HttpClient();
             var queryString = HttpUtility.ParseQueryString(string.Empty);
 
-            var luisAppId = "1054ba52-b5c8-47ca-9df4-d658b0156bf6";
-            var subscriptionKey = "99a453bd43d24bdf8e4cb12176a94301";
+            var keys = GetKeys();
 
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", keys.SubscriptionKey);
 
             queryString["q"] = query;
 
-            var uri = "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + luisAppId + "?" + queryString;
+            var uri = "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + keys.LuisAppId + "?" + queryString;
             var response = await client.GetAsync(uri);
 
             var responseContent = await response.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<LuisResponse>(responseContent);
+        }
+
+        private static Keys GetKeys()
+        {
+            Keys keys;
+
+            using (var reader = new StreamReader("App.json"))
+            {
+                var json = reader.ReadToEnd();
+
+                keys = JsonConvert.DeserializeObject<Keys>(json);
+            }
+
+            return keys;
         }
     }
 }
